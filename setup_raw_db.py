@@ -1,25 +1,27 @@
 import psycopg2
+import os
+from dotenv import load_dotenv
 
-# Adjust these credentials to match your local PostgreSQL setup
-DB_CONFIG = {
-    "dbname": "library_db",
-    "user": "barker",        # Change if your user is different
-    "password": "NinaAlice", # Change to your actual password
-    "host": "localhost",
-    "port": "5432"
-}
+load_dotenv()
 
 def create_raw_table():
-    conn = psycopg2.connect(**DB_CONFIG)
+    conn = psycopg2.connect(
+        dbname=os.getenv('DB_NAME'),
+        user=os.getenv('DB_USER'),
+        password=os.getenv('DB_PASS'),
+        host='localhost'
+    )
     cur = conn.cursor()
     
-    # We define columns as TEXT to handle the messy data (commas, quotes)
-    # until we decide how to clean it later.
+    # DROP the old table first so we can recreate it cleanly
+    cur.execute("DROP TABLE IF EXISTS raw_books;")
+    
+    # Note: Using lowercase column names consistently
     query = '''
-    CREATE TABLE IF NOT EXISTS raw_books (
+    CREATE TABLE raw_books (
         text_id INTEGER PRIMARY KEY,
         type TEXT,
-        issued DATE,
+        issued TEXT,
         title TEXT,
         language TEXT,
         authors TEXT,
@@ -32,7 +34,7 @@ def create_raw_table():
     conn.commit()
     cur.close()
     conn.close()
-    print("Table 'raw_books' initialized successfully!")
+    print("Table 'raw_books' recreated successfully with correct schema!")
 
 if __name__ == "__main__":
     create_raw_table()
